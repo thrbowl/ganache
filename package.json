@@ -11,11 +11,16 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
-    "sign-mac": "codesign --deep --force --verbose --sign 'Developer ID Application: Timothy Coulter (58RKXWC272)' ./out/make/*.dmg",
+    "sign-mac": "codesign --deep --force --verbose --sign 'Developer ID Application: Timothy Coulter (58RKXWC272)' ./out/make/*",
     "makeappxassets": "svg2uwptiles -i ./Logo.svg -c ./blank.svg -o ./resources/appx/",
     "build-linux": "cd ./node_modules/rabin-bindings && node-gyp rebuild && cd ../../ && npm run make",
     "build-mac": "npm run make && npm run sign-mac",
-    "build-windows": "bash -c \"echo ${CERT_PASS?\\\"Need to set CERT_PASS to build on Windows\\\"} > /dev/null\" && npm run make"
+    "build-windows": "bash -c \"echo ${CERT_PASS?\\\"Need to set CERT_PASS to build on Windows\\\"} > /dev/null\" && npm run make",
+    "electron-updater-fork-clone": "mkdir -p .node_modules_git && cd .node_modules_git && ls electron-builder/.git || git clone https://github.com/benjamincburns/electron-builder.git",
+    "electron-updater-fork-checkout": "cd .node_modules_git/electron-builder && git checkout fix-bad-gh-name-and-release-notes",
+    "electron-updater-fork-build": "cd .node_modules_git/electron-builder && npx yarn && npx yarn compile",
+    "preinstall": "npm run electron-updater-fork-clone && npm run electron-updater-fork-checkout && npm run electron-updater-fork-build",
+    "postinstall": "cd node_modules/electron-updater && npx yarn && rm -rf node_modules/builder-util-runtime && npx yarn add builder-util-runtime"
   },
   "browserslist": "chrome 50",
   "build": {
@@ -27,7 +32,14 @@
       "icon": "./resources/icons/png/",
       "category": "Development",
       "executableName": "Ganache"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "trufflesuite",
+        "repo": "ganache"
+      }
+    ]
   },
   "config": {
     "forge": {
@@ -37,7 +49,8 @@
           "squirrel"
         ],
         "darwin": [
-          "dmg"
+          "dmg",
+          "zip"
         ],
         "linux": [
           "appimage"
@@ -137,10 +150,10 @@
     "cross-env": "^3.1.4",
     "electron-debug": "^1.1.0",
     "electron-devtools-installer": "^2.0.1",
-    "electron-forge": "^4.1.2",
+    "electron-forge": "^5.1.1",
     "electron-icon-maker": "0.0.3",
     "electron-log": "^2.2.9",
-    "electron-prebuilt-compile": "1.6.11",
+    "electron-prebuilt-compile": "1.8.4",
     "electron-rebuild": "^1.6.0",
     "jsdom": "^9.9.1",
     "minimist": "^1.2.0",
@@ -150,12 +163,13 @@
     "rcedit": "^0.9.0",
     "redux-logger": "^2.7.4",
     "source-map-support": "^0.4.8",
-    "svg2uwptiles": "0.0.4"
+    "svg2uwptiles": "0.0.4",
+    "electron-builder": "^20.6.2",
+    "webpack": "^3.11.0"
   },
   "dependencies": {
     "@exponent/electron-cookies": "^2.0.0",
     "async": "^2.5.0",
-    "electron-compile": "^6.4.2",
     "electron-forge-maker-appimage": "^19.30.3",
     "electron-settings": "^3.1.2",
     "electron-squirrel-startup": "^1.0.0",
@@ -172,8 +186,10 @@
     "react": "^15.4.2",
     "react-dom": "^15.6.2",
     "react-hot-loader": "^3.1.1",
+    "react-marked-markdown": "^1.4.6",
     "react-moment": "^0.2.2",
     "react-redux": "^5.0.2",
+    "react-render-html": "^0.6.0",
     "react-router": "^3.0.1",
     "react-router-redux": "^4.0.7",
     "redux": "^3.6.0",
@@ -182,7 +198,8 @@
     "scrypt": "^6.0.3",
     "universal-analytics": "^0.4.13",
     "uuid": "^3.1.0",
-    "web3": "1.0.0-beta.27"
+    "web3": "1.0.0-beta.27",
+    "electron-updater": "file://.node_modules_git/electron-builder/packages/electron-updater"
   },
   "devEngines": {
     "node": ">=6.x",
