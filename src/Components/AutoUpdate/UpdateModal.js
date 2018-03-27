@@ -4,7 +4,12 @@ import connect from '../Helpers/connect'
 
 import Modal from '../../Elements/Modal'
 
-import { hideUpdateModal, installAndRelaunch } from '../../Actions/AutoUpdate'
+import OnlyIf from '../../Elements/OnlyIf'
+
+import ProgressBar from '../../Elements/ProgressBar'
+
+
+import * as AutoUpdate from '../../Actions/AutoUpdate'
 
 import UpdateIcon from '../../Elements/icons/modal-update.svg'
 
@@ -21,22 +26,41 @@ class UpdateModal extends Component {
       <Modal className="UpdateModal">
         <section className="Update">
           <UpdateIcon />
-          <h4>Release v{this.props.newVersion} is now available!</h4>
-          <p>{this.props.releaseName}</p>
-          <div className="releaseNotes">
-            { renderHtml(this.props.releaseNotes) }
-          </div>
+          <h4>Release v{this.props.autoUpdate.versionInfo.newVersion} is now available!</h4>
+          <OnlyIf test={!this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress}>
+            <div>
+              <p>{this.props.autoUpdate.versionInfo.releaseName || ''}</p>
+              <div className="releaseNotes">
+                { renderHtml(this.props.autoUpdate.versionInfo.releaseNotes) }
+              </div>
+            </div>
+          </OnlyIf>
+          <OnlyIf test={!this.props.autoUpdate.downloadComplete && this.props.autoUpdate.downloadInProgress}>
+            <div>
+              <ProgressBar progress={this.props.autoUpdate.downloadProgress.percent || 0} />
+              <p>Downloaded {this.props.autoUpdate.transferred} of {this.props.autoUpdate.total} bytes.</p>
+            </div>
+          </OnlyIf>
           <footer>
             <button className="delayButton" onClick={() => {
-              this.props.dispatch(hideUpdateModal())
+              this.props.dispatch(AutoUpdate.cancelUpdate())
             }} >
               Cancel
             </button>
-            <button className="ctaButton" onClick={() => {
-              this.props.dispatch(installAndRelaunch())
-            }} >
+            <OnlyIf test={!this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress}>
+              <button className="ctaButton" onClick={() => {
+                this.props.dispatch(AutoUpdate.beginDownloading())
+              }} >
+              Download & Install
+              </button>
+            </OnlyIf>
+            <OnlyIf test={this.props.autoUpdate.downloadComplete}>
+              <button className="ctaButton" onClick={() => {
+                this.props.dispatch(AutoUpdate.installAndRelaunch())
+              }} >
               Install & Relaunch
               </button>
+            </OnlyIf>
           </footer>
         </section>
       </Modal>
@@ -44,4 +68,4 @@ class UpdateModal extends Component {
   }
 }
 
-export default connect(UpdateModal)
+export default connect(UpdateModal, "autoUpdate")

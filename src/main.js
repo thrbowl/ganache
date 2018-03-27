@@ -44,7 +44,7 @@ process.on('uncaughtException', err => {
   }
 })
 
-process.on('unhandledRejection', error => {
+process.on('unhandledRejection', err => {
   if (mainWindow && err) {
     mainWindow.webContents.send(SET_SYSTEM_ERROR, err.stack || err)
   }

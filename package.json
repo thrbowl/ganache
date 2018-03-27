@@ -199,7 +199,8 @@
     "universal-analytics": "^0.4.13",
     "uuid": "^3.1.0",
     "web3": "1.0.0-beta.27",
-    "electron-updater": "file://.node_modules_git/electron-builder/packages/electron-updater"
+    "electron-updater": "file://.node_modules_git/electron-builder/packages/electron-updater",
+    "builder-util-runtime": "^4.2.0"
   },
   "devEngines": {
     "node": ">=6.x",

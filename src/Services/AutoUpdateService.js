@@ -1,6 +1,7 @@
 import EventEmitter from 'events'
 import { app, protocol, ipcMain } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import { CancellationToken } from 'builder-util-runtime'
 import path from 'path'
 import _ from 'lodash'
 
@@ -21,6 +22,8 @@ const defaultOptions = {
   autoDownload: false
 }
 
+let _cancelToken = null
+
 export default class AutoUpdateService extends EventEmitter {
   constructor(options) {
     super()
@@ -38,8 +41,9 @@ export default class AutoUpdateService extends EventEmitter {
 
     this.isCheckingForUpdate = false
     this.isUpdateAvailable = false
-    this.isDownloadingRelease = false
+    this.isDownloadingUpdate = false
     this.isRestartingForUpdate = false
+    this.updateDownloaded = false
 
     autoUpdater.on('checking-for-update', () => {
       console.log('checking-for-update event fired')
@@ -61,46 +65,46 @@ export default class AutoUpdateService extends EventEmitter {
       self.updateReleaseNotes = updateInfo.releaseNotes
     })
 
+    autoUpdater.on('update-downloaded', (path) => {
+      self.updateDownloaded = true
+      _cancelToken = null;
+    })
     autoUpdater.on('error', (errorInfo) => {
       console.log('error event fired', errorInfo)
-      self.isCheckingForUpdate = false
-      if (self.isDownloadingRelease) {
+      if (self.isDownloadingUpdate) {
         self.emit('download-error', errorInfo)
       }
-      self.isDownloadingRelease = false
+      self.isCheckingForUpdate = false
+      self.isDownloadingUpdate = false
     })
 
     proxiedEvents.map(this._initProxiedEvent.bind(this))
   }
 
   checkForUpdates() {
-    if (false /*isDevMode*/) {
-      let updateInfo = {
-        version: autoUpdater.currentVersion,
-        releaseName: 'Development Version',
-        releaseNotes: '',
-        releaseDate: new Date().toISOString()
-      }
+    console.log(`checkForUpdates called!`)
+    return autoUpdater.checkForUpdates()
+  }
 
-      this.emit('checking-for-update')
+  downloadUpdate() {
+    this.isDownloadingUpdate = true
+    if (_cancelToken) {
+      _cancelToken.cancel()
+    }
+    _cancelToken = new CancellationToken()
+    autoUpdater.downloadUpdate(_cancelToken)
+  }
 
-      // emit a dummy version info object to avoid any errors downstream
-      this.emit('update-not-available', updateInfo)
-      return Promise.resolve(updateInfo)
-    } else {
-      console.log(`checkForUpdates called!`)
-      return autoUpdater.checkForUpdates()
+  cancelUpdate() {
+    if (_cancelToken) {
+      _cancelToken.cancel()
+      _cancelToken = null
+      this.isDownloadingUpdate = false
     }
   }
 
-  downloadUpdate(cancellationToken) {
-    if (!devMode) {
-      autoUpdater.downloadUpdate(cancellationToken)
-    }
-  }
-
-  quitAndInstall() {
-    if (!devMode) {
+  installAndRelaunch() {
+    if (!devMode && this.updateDownloaded) {
       this.restartingForUpdate = true
       appUpdater.quitAndInstall(false, true)
     }

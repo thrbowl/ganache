@@ -1,6 +1,7 @@
 import * as AutoUpdate from '../Actions/AutoUpdate'
 
 const initialState = {
+  downloadComplete: false,
   downloadInProgress: false,
   isRestartingForUpdate: false,
   isNewVersionAvailable: false,
@@ -8,10 +9,17 @@ const initialState = {
     newVersion: '',
     releaseName: '',
     releaseNotes: ''
+  },
+  downloadProgress: {
+    bytesPerSecond: 0,
+    percent: 0,
+    total: 0,
+    transferred: 0
   }
 }
 
 export default function (state = initialState, action) {
+
   switch (action.type) {
     case AutoUpdate.UPDATE_AVAILABLE:
       return Object.assign({}, initialState, state, {
@@ -24,6 +32,7 @@ export default function (state = initialState, action) {
       })
     case AutoUpdate.DOWNLOAD_PROGRESS:
       return Object.assign({}, initialState, state, {
+        downloadComplete: false,
         downloadInProgress: true,
         downloadProgress: {
           bytesPerSecond: action.bytesPerSecond,
@@ -34,9 +43,21 @@ export default function (state = initialState, action) {
       })
     case AutoUpdate.DOWNLOAD_ERROR:
       return Object.assign({}, initialState, state, {
+        downloadComplete: false,
         downloadInProgress: false,
         downloadError: action.errorInfo
         // don't clear progress so that progress bar can show where it failed
+      })
+    case AutoUpdate.UPDATE_DOWNLOADED:
+      return Object.assign({}, initialState, state, {
+        downloadComplete: true,
+        downloadInProgress: false,
+        downloadProgress: {
+          bytesPerSecond: 0,
+          percent: 100,
+          total: state.downloadProgress.total,
+          transferred: state.downloadProgress.total
+        }
       })
     case AutoUpdate.INSTALL_AND_RELAUNCH:
       return Object.assign({}, initialState, state, {
@@ -46,12 +67,21 @@ export default function (state = initialState, action) {
       return Object.assign({}, initialState, state, {
         showModal: true
       })
-    case AutoUpdate.HIDE_UPDATE_MODAL:
+    case AutoUpdate.CANCEL_UPDATE:
       return Object.assign({}, initialState, state, {
-        showModal: false
+        isRestartingForUpdate: false,
+        downloadComplete: false,
+        downloadInProgress: false,
+        showModal: false,
+        downloadProgress: {
+          bytesPerSecond: initialState.downloadProgress.bytesPerSecond,
+          percent: initialState.downloadProgress.percent,
+          total: initialState.downloadProgress.total,
+          transferred: initialState.downloadProgress.transferred
+        }
       })
     default:
-      if (!state || state.downloadProgress === undefined) {
+      if (!state || !state.downloadProgress) {
         return Object.assign({}, initialState, state || {})
       } else {
         return state

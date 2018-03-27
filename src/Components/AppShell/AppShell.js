@@ -119,11 +119,7 @@ class AppShell extends Component {
           <BugModal systemError={this.props.core.systemError} logs={this.props.logs} />
         </OnlyIf>
         <OnlyIf test={this.props.autoUpdate.showModal}>
-          <UpdateModal
-            newVersion={this.props.autoUpdate.versionInfo.newVersion}
-            releaseName={this.props.autoUpdate.versionInfo.releaseName}
-            releaseNotes={this.props.autoUpdate.versionInfo.releaseNotes}
-          />
+          <UpdateModal />
         </OnlyIf>
       </div>
     )
