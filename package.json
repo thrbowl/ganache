@@ -8,23 +8,79 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-builder package",
-    "make": "electron-builder make",
+    "make": "electron-builder build",
     "publish": "electron-builder publish",
     "lint": "echo \"No linting configured\"",
     "sign-mac": "codesign --deep --force --verbose --sign 'Developer ID Application: Timothy Coulter (58RKXWC272)' ./out/make/*.dmg",
     "makeappxassets": "svg2uwptiles -i ./Logo.svg -c ./blank.svg -o ./resources/appx/",
     "build-linux": "cd ./node_modules/rabin-bindings && node-gyp rebuild && cd ../../ && npm run make",
     "build-mac": "npm run make",
-    "build-windows": "bash -c \"echo ${CERT_PASS?\\\"Need to set CERT_PASS to build on Windows\\\"} > /dev/null\" && npm run make"
+    "build-windows": "electron-builder build --win"
   },
   "browserslist": "chrome 50",
   "build": {
+    "appId": "org.trufflesuite.ganache",
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "resources",
+      "output": "dist"
+    },
+    "win": {
+      "icon": "resources/icons/win/icon.ico",
+      "certificateFile": "./certs/cert.pfx",
+      "publisherName": "CN=Consensys Inc, O=Consensys Inc, L=New York, S=New York, C=US",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "appx",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
+    },
+    "appx": {
+      "identityName": "Ganache",
+      "publisher": "CN=Consensys Inc, O=Consensys Inc, L=New York, S=New York, C=US",
+      "publisherDisplayName": "Consensys Inc",
+      "backgroundColor": "#34262A"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": "true",
+      "deleteAppDataOnUninstall": "true"
+    },
     "mac": {
-      "icon": "./resources/icons/icon.icns"
+      "icon": "resources/icons/icon.icns",
+      "identity": "Developer ID Installer: Timothy Coulter (58RKXWC272)"
+    },
+    "dmg": {
+      "background": "resources/dmg/background.png",
+      "icon": "resources/icons/icon.icns",
+      "format": "ULFO"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "./resources/icons/png/",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "resources/icons/png/",
       "category": "Development",
       "executableName": "Ganache"
     },
@@ -35,74 +91,6 @@
         "repo": "ganache"
       }
     ]
-  },
-  "config": {
-    "forge": {
-      "make_targets": {
-        "win32": [
-          "appx",
-          "squirrel"
-        ],
-        "darwin": [
-          "dmg",
-          "zip"
-        ],
-        "linux": [
-          "appimage"
-        ]
-      },
-      "electronPackagerConfig": {
-        "icon": "resources/icons/icon.ico",
-        "osxSign": {
-          "identity": "Developer ID Application: Timothy Coulter (58RKXWC272)"
-        },
-        "prune": true,
-        "ignore": [
-          ".*node_modules/fsevents/build.*",
-          "forge_hooks",
-          ".vscode"
-        ],
-        "afterPrune": [
-          "./forge_hooks/afterPrune.js"
-        ]
-      },
-      "electronWinstallerConfig": {
-        "name": "<%= productName %>",
-        "setupIcon": "resources/icons/win/icon.ico"
-      },
-      "electronInstallerDebian": {
-        "icon": "resources/logo.png",
-        "categories": [
-          "Development"
-        ],
-        "homepage": "https://truffleframework.com"
-      },
-      "github_repository": {
-        "owner": "",
-        "name": ""
-      },
-      "electronInstallerDMG": {
-        "background": "./resources/dmg/background.png",
-        "icon": "./resources/icons/icon.icns",
-        "format": "ULFO",
-        "code-sign": {
-          "signing-identity": "Developer ID Installer: Timothy Coulter (58RKXWC272)"
-        }
-      },
-      "windowsStoreConfig": {
-        "packageVersion": "<%= version %>.0",
-        "packageName": "<%= productName %>",
-        "packageDescription": "Personal blockchain for Ethereum development",
-        "publisher": "CN=Consensys Inc, O=Consensys Inc, L=New York, S=New York, C=US",
-        "windowsKit": "<%= process.env.WIN10_SDK_PATH %>",
-        "assets": "./resources/appx",
-        "manifest": "./AppXManifest.xml",
-        "makePri": true,
-        "devCert": "./certs/cert.pfx",
-        "certPass": "<%= process.env.CERT_PASS %>",
-        "makeVersionWinStoreCompatible": true
-      }
-    }
   },
   "repository": {
     "type": "git",
