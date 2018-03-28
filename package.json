@@ -65,10 +65,25 @@
     },
     "mac": {
       "icon": "resources/icons/icon.icns",
-      "identity": "Developer ID Installer: Timothy Coulter (58RKXWC272)"
+      "identity": "Timothy Coulter (58RKXWC272)"
     },
     "dmg": {
-      "background": "resources/dmg/background.png",
+      "background": "resources/dmg/background.tiff",
+      "contents": [
+        {
+          "x": 219,
+          "y": 358,
+          "type": "dir",
+          "name": "Ganache.app"
+        },
+        {
+          "x": 439,
+          "y": 358,
+          "type": "link",
+          "name": "Applications",
+          "path": "/Applications"
+        }
+      ],
       "icon": "resources/icons/icon.icns",
       "format": "ULFO"
     },
