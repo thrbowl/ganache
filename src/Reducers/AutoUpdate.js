@@ -15,7 +15,8 @@ const initialState = {
     percent: 0,
     total: 0,
     transferred: 0
-  }
+  },
+  downloadError: null
 }
 
 export default function (state = initialState, action) {
@@ -30,9 +31,23 @@ export default function (state = initialState, action) {
           releaseNotes: action.releaseNotes
         }
       })
-    case AutoUpdate.DOWNLOAD_PROGRESS:
+    case AutoUpdate.BEGIN_DOWNLOADING:
       return Object.assign({}, initialState, state, {
+        isRestartingForUpdate: false,
         downloadComplete: false,
+        downloadInProgress: true,
+        downloadError: null,
+        downloadProgress: {
+          bytesPerSecond: initialState.downloadProgress.bytesPerSecond,
+          percent: initialState.downloadProgress.percent,
+          total: initialState.downloadProgress.total,
+          transferred: initialState.downloadProgress.transferred
+        }
+      })
+    case AutoUpdate.DOWNLOAD_PROGRESS:
+      console.log(`DOWNLOAD_PROGRESS: ${action.percent}`)
+      return Object.assign({}, initialState, state, {
+        downloadComplete: action.percent == 100,
         downloadInProgress: true,
         downloadProgress: {
           bytesPerSecond: action.bytesPerSecond,
@@ -65,6 +80,7 @@ export default function (state = initialState, action) {
       })
     case AutoUpdate.SHOW_UPDATE_MODAL:
       return Object.assign({}, initialState, state, {
+        downloadError: false,
         showModal: true
       })
     case AutoUpdate.CANCEL_UPDATE:

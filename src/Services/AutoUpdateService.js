@@ -1,20 +1,11 @@
 import EventEmitter from 'events'
 import { app, protocol, ipcMain } from 'electron'
-import { autoUpdater } from 'electron-updater'
+import { autoUpdater } from 'benjamincburns-forked-electron-updater'
 import { CancellationToken } from 'builder-util-runtime'
 import path from 'path'
 import _ from 'lodash'
 
 const isDevMode = process.execPath.match(/[\\/]electron/);
-
-const proxiedEvents = [
-  'checking-for-update',
-  'update-available',
-  'update-not-available',
-  'error',
-  'update-downloaded',
-  'download-progress'
-]
 
 const defaultOptions = {
   allowPrerelease: false,
@@ -22,12 +13,11 @@ const defaultOptions = {
   autoDownload: false
 }
 
-let _cancelToken = null
-
 export default class AutoUpdateService extends EventEmitter {
   constructor(options) {
     super()
     const self = this
+
     options = _.merge({}, defaultOptions, options || {})
 
     autoUpdater.allowPrerelease = options.allowPrerelease
@@ -39,6 +29,7 @@ export default class AutoUpdateService extends EventEmitter {
       autoUpdater.updateConfigPath = path.join(__dirname, '..', '..', 'dev-app-update.yml')
     }
 
+    this._cancelToken = null
     this.isCheckingForUpdate = false
     this.isUpdateAvailable = false
     this.isDownloadingUpdate = false
@@ -48,14 +39,15 @@ export default class AutoUpdateService extends EventEmitter {
     autoUpdater.on('checking-for-update', () => {
       console.log('checking-for-update event fired')
       self.isCheckingForUpdate = true
+      self.emit('checking-for-update')
     })
 
     autoUpdater.on('update-not-available', () => {
       console.log('update-not-available event fired')
       self.isCheckingForUpdate = false
       self.isUpdateAvailable = false
+      self.emit('update-not-available')
     })
-
     autoUpdater.on('update-available', (updateInfo) => {
       console.log('update-available event fired')
       self.isCheckingForUpdate = false
@@ -63,57 +55,78 @@ export default class AutoUpdateService extends EventEmitter {
       self.updateVersion = updateInfo.version
       self.updateReleaseName = updateInfo.releaseName
       self.updateReleaseNotes = updateInfo.releaseNotes
+      self.emit('update-available', updateInfo)
     })
-
     autoUpdater.on('update-downloaded', (path) => {
+      console.log(`Update downloaded to path ${path}`)
       self.updateDownloaded = true
-      _cancelToken = null;
+      self._cancelToken = null;
+      self.emit('update-downloaded', path)
     })
     autoUpdater.on('error', (errorInfo) => {
       console.log('error event fired', errorInfo)
       if (self.isDownloadingUpdate) {
         self.emit('download-error', errorInfo)
+      } else {
+        self.emit('error', errorInfo)
       }
       self.isCheckingForUpdate = false
       self.isDownloadingUpdate = false
     })
-
-    proxiedEvents.map(this._initProxiedEvent.bind(this))
+    autoUpdater.on('download-progress', (progress) => {
+      console.log(`Downloaded ${progress.percent}%, or ${progress.transferred}, of ${progress.total} bytes.`)
+      self.emit('download-progress', progress)
+    })
   }
 
   checkForUpdates() {
-    console.log(`checkForUpdates called!`)
-    return autoUpdater.checkForUpdates()
+    if (isDevMode) {
+      this.emit('checking-for-update')
+      this.emit('update-not-available') 
+    } else {
+      console.log(`checkForUpdates called!`)
+      let promise = autoUpdater.checkForUpdates()
+      if (promise.catch) {
+        // avoid unhandled promise rejection
+        // error will be reported from the `error` event handler
+        promise.catch((err) => {})
+      }
+    }
   }
 
   downloadUpdate() {
-    this.isDownloadingUpdate = true
-    if (_cancelToken) {
-      _cancelToken.cancel()
+    if (!isDevMode) {
+      this.isDownloadingUpdate = true
+      if (this._cancelToken) {
+        this._cancelToken.cancel()
+      }
+      this._cancelToken = new CancellationToken()
+      let promise = autoUpdater.downloadUpdate(this._cancelToken)
+      if (promise.catch) {
+        // avoid unhandled promise rejection
+        // error will be reported from the `error` event handler
+        promise.catch((err) => {})
+      }
     }
-    _cancelToken = new CancellationToken()
-    autoUpdater.downloadUpdate(_cancelToken)
   }
 
   cancelUpdate() {
-    if (_cancelToken) {
-      _cancelToken.cancel()
-      _cancelToken = null
+    if (this._cancelToken) {
+      this._cancelToken.cancel()
+      this._cancelToken = null
       this.isDownloadingUpdate = false
     }
   }
 
   installAndRelaunch() {
-    if (!devMode && this.updateDownloaded) {
+    if (!isDevMode && this.updateDownloaded) {
       this.restartingForUpdate = true
-      appUpdater.quitAndInstall(false, true)
+      let promise = autoUpdater.quitAndInstall(false, true)
+      if (promise.catch) {
+        // avoid unhandled promise rejection
+        // error will be reported from the `error` event handler
+        promise.catch((err) => {})
+      }
     }
-  }
-
-  _initProxiedEvent(event) {
-    const self = this
-    autoUpdater.on(event, (...args) => {
-      self.emit(event, ...args)
-    })
   }
 }

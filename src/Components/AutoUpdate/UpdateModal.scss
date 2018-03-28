@@ -14,6 +14,20 @@
         overflow-y: scroll;
       }
 
+      .updateDetails {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .ProgressBar {
+        width: 200px
+      }
+
+      .downloadSpeed {
+        text-align: right;
+      }
+
       footer {
         .delayButton {
           background-color: rgba(227, 227, 227, 0.9);

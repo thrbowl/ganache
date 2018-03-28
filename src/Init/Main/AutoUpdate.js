@@ -21,14 +21,17 @@ export function initAutoUpdates(settings, mainWindow) {
     console.log(`v${updateInfo.version} is latest version, no update available!`)
   })
   autoUpdateService.on('update-available',(updateInfo) => {
-    console.log(`update v${updateInfo.version} available!`)
+    console.log(`update v${updateInfo.version} available (main)!`)
     mainWindow.webContents.send(AutoUpdate.UPDATE_AVAILABLE, updateInfo)
   })
   autoUpdateService.on('download-progress',(progressInfo) => {
+    console.log(`download-progress (main): ${progressInfo.percent}`)
     mainWindow.webContents.send(AutoUpdate.DOWNLOAD_PROGRESS, progressInfo)
   })
-  autoUpdateService.on('update-downloaded',(updateInfo) => {
-    mainWindow.webContents.send(AutoUpdate.UPDATE_DOWNLOADED, updateInfo)
+  autoUpdateService.on('update-downloaded',(path) => {
+    console.log(`update-downloaded (main): ${path}`)
+    mainWindow.webContents.send(AutoUpdate.UPDATE_DOWNLOADED)
+    setTimeout(() => { autoUpdateService.installAndRelaunch() }, 1000)
   })
   autoUpdateService.on('download-error',(errorInfo) => {
     mainWindow.webContents.send(AutoUpdate.DOWNLOAD_ERROR, errorInfo)
@@ -37,12 +40,15 @@ export function initAutoUpdates(settings, mainWindow) {
     console.log('error in autoupdateservice!')
   })
   ipcMain.on(AutoUpdate.CANCEL_UPDATE, (event) => {
+    console.log('cancel-update(main)')
     autoUpdateService.cancelUpdate()
   })
   ipcMain.on(AutoUpdate.BEGIN_DOWNLOADING, (event) => {
+    console.log('begin-downloading(main)')
     autoUpdateService.downloadUpdate()
   })
   ipcMain.on(AutoUpdate.INSTALL_AND_RELAUNCH, (event) => {
+    console.log('install-and-relaunch(main)')
     autoUpdateService.installAndRelaunch()
   })
 

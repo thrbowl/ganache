@@ -45,15 +45,9 @@ export const setDownloadProgress = function(bytesPerSecond, percent, total, tran
 }
 
 export const UPDATE_DOWNLOADED = `${prefix}/UPDATE_DOWNLOADED`
-export const setUpdateDownloaded = function(newVersion, releaseName, releaseNotes) {
-  if (releaseName === undefined && releaseNotes === undefined) {
-    let updateInfo = newVersion
-    newVersion = updateInfo.version
-    releaseName = updateInfo.releaseName
-    releaseNotes = updateInfo.releaseNotes
-  }
+export const setUpdateDownloaded = function() {
   return function(dispatch, getState) {
-    dispatch({ type: UPDATE_DOWNLOADED, newVersion, releaseName, releaseNotes })
+    dispatch({ type: UPDATE_DOWNLOADED })
   }
 }
 
