@@ -15,7 +15,7 @@
     "makeappxassets": "svg2uwptiles -i ./Logo.svg -c ./blank.svg -o ./resources/appx/",
     "build-linux": "cd ./node_modules/rabin-bindings && node-gyp rebuild && cd ../../ && npm run make",
     "build-mac": "npm run make",
-    "build-windows": "electron-builder build --win"
+    "build-windows": "bash -c \"echo ${CERT_PASS?\\\"Need to set CERT_PASS to build on Windows\\\"} > /dev/null\" && npm run make"
   },
   "browserslist": "chrome 50",
   "build": {
@@ -23,6 +23,8 @@
     "files": [
       "src/**/*",
       "node_modules/**/*",
+      "resources/fonts/*",
+      "resources/icons/**/*",
       "package.json"
     ],
     "directories": {
@@ -30,7 +32,7 @@
       "output": "dist"
     },
     "win": {
-      "icon": "resources/icons/win/icon.ico",
+      "icon": "resources/icons/icon.ico",
       "certificateFile": "./certs/cert.pfx",
       "publisherName": "CN=Consensys Inc, O=Consensys Inc, L=New York, S=New York, C=US",
       "target": [
