@@ -34,10 +34,14 @@ export function initAutoUpdates(settings, mainWindow) {
     setTimeout(() => { autoUpdateService.installAndRelaunch() }, 1000)
   })
   autoUpdateService.on('download-error',(errorInfo) => {
-    mainWindow.webContents.send(AutoUpdate.DOWNLOAD_ERROR, errorInfo)
+    console.log(`Error while downloading update: ${errorInfo}`)
+    mainWindow.webContents.send(AutoUpdate.DOWNLOAD_ERROR, {
+      message: errorInfo.message || errorInfo.toString(),
+      stack: errorInfo.stack || null
+    })
   })
   autoUpdateService.on('error',(errorInfo) => {
-    console.log('error in autoupdateservice!')
+    console.log(`autoUpdateService error: ${errorInfo}`)
   })
   ipcMain.on(AutoUpdate.CANCEL_UPDATE, (event) => {
     console.log('cancel-update(main)')

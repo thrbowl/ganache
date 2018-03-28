@@ -24,61 +24,112 @@ class UpdateModal extends Component {
     this.scrollDedupeTimeout = null
   }
 
+  renderBody() {
+    if (this.props.autoUpdate.downloadError) {
+      return this.renderErrorBody()
+    } else if (this.props.autoUpdate.downloadInProgress || this.props.autoUpdate.downloadComplete) {
+      return this.renderDownloadBody()
+    } else {
+      return this.renderReleaseDetailsBody()
+    }
+  }
+
+  renderErrorBody() {
+    return (
+      <div className="updateDetails">
+        <p>An error occurred while downloading your update!</p>
+        <div className="releaseNotesOrError">
+        { this.props.autoUpdate.downloadError ? (this.props.autoUpdate.downloadError.message || this.props.autoUpdate.downloadError) : '' }
+        </div>
+      </div>
+    )
+  }
+
+  renderReleaseDetailsBody() {
+    return (
+      <div className="updateDetails">
+        <p>{this.props.autoUpdate.versionInfo.releaseName || ''}</p>
+        <div className="releaseNotesOrError">
+          { renderHtml(this.props.autoUpdate.versionInfo.releaseNotes) }
+        </div>
+      </div>
+    )
+  }
+
+  renderDownloadBody() {
+    return (
+      <div className="updateDetails">
+        <ProgressBar percent={ this.props.autoUpdate.downloadProgress.percent } />
+        { this.renderDownloadStatusText() }
+      </div>
+    )
+  }
+
+  renderDownloadStatusText() {
+    if (this.props.autoUpdate.downloadInProgress && this.props.autoUpdate.downloadProgress.percent < 100) {
+      return this.renderDownloadSpeed()
+    } else {
+      return this.renderDownloadComplete()
+    }
+  }
+
+  renderDownloadSpeed() {
+    return <p className="downloadSpeed">{ sizeFormatter(this.props.autoUpdate.downloadProgress.bytesPerSecond || 0) }/s</p>
+  }
+
+  renderDownloadComplete() {
+    return <p>Download Complete - Restarting!</p>
+  }
+
+  renderFooter() {
+    return (
+      <footer>
+        { this.renderCancelButton() }
+        { this.renderCallToActionButton() }
+      </footer>
+    )
+  }
+
+  renderCancelButton() {
+    if (!this.props.autoUpdate.downloadComplete) {
+      return (
+        <button className="delayButton" onClick={() => {
+          this.props.dispatch(AutoUpdate.cancelUpdate())
+        }} >
+        Cancel
+      </button>
+      )
+    }
+  }
+
+  renderCallToActionButton() {
+    if (this.props.autoUpdate.downloadError) {
+      return (
+        <button className="ctaButton" onClick={() => {
+          this.props.dispatch(AutoUpdate.beginDownloading())
+        }} >
+        Try Again
+      </button>
+      )
+    } else if (!this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress) {
+      return (
+        <button className="ctaButton" onClick={() => {
+          this.props.dispatch(AutoUpdate.beginDownloading())
+        }} >
+        Download & Install
+      </button>
+      )
+    }
+  }
+
   render () {
     return (
       <Modal className="UpdateModal">
         <section className="Update">
           <UpdateIcon />
           <h4>Release v{this.props.autoUpdate.versionInfo.newVersion} is now available!</h4>
-          <OnlyIf test={!this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress}>
-            <div className="updateDetails">
-              <p>{this.props.autoUpdate.versionInfo.releaseName || ''}</p>
-              <div className="releaseNotes">
-                { renderHtml(this.props.autoUpdate.versionInfo.releaseNotes) }
-              </div>
-            </div>
-          </OnlyIf>
-          <OnlyIf test={ !this.props.autoUpdate.downloadError && (this.props.autoUpdate.downloadComplete || this.props.autoUpdate.downloadInProgress) }>
-            <div className="updateDetails">
-              <ProgressBar percent={ this.props.autoUpdate.downloadProgress.percent }>
-              </ProgressBar>
-              <OnlyIf test={ !this.props.autoUpdate.downloadComplete && this.props.autoUpdate.downloadProgress.total > 0 }>
-                <p className="downloadSpeed">{ sizeFormatter(this.props.autoUpdate.downloadProgress.bytesPerSecond || 0) }/s</p>
-              </OnlyIf>
-              <OnlyIf test={ this.props.autoUpdate.downloadComplete }>
-                <p>Download Complete - Restarting!</p>
-              </OnlyIf>
-            </div>
-          </OnlyIf>
-          <OnlyIf test={ this.props.autoUpdate.downloadError }>
-            <div className="updateDetails">
-              <p>An error occurred while downloading your update!</p>
-              <p>{ this.props.autoUpdate.downloadError ? (this.props.autoUpdate.downloadError.message || this.props.autoUpdate.downloadError) : '' }</p>
-            </div>
-          </OnlyIf>
-          <footer>
-            <OnlyIf test={ !this.props.autoUpdate.downloadComplete }>
-              <button className="delayButton" onClick={() => {
-                this.props.dispatch(AutoUpdate.cancelUpdate())
-              }} >
-                Cancel
-              </button>
-            </OnlyIf>
-            <OnlyIf test={ !this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress }>
-              <button className="ctaButton" onClick={() => {
-                this.props.dispatch(AutoUpdate.beginDownloading())
-              }} >
-              Download & Install
-              </button>
-            </OnlyIf>
-            <OnlyIf test={ this.props.autoUpdate.downloadError }>
-              <button className="ctaButton" onClick={() => {
-                this.props.dispatch(AutoUpdate.beginDownloading())
-              }} >
-              Try Again
-              </button>
-            </OnlyIf>
-          </footer>
+          { this.renderBody() }
+          { this.renderFooter() }
         </section>
       </Modal>
     )
