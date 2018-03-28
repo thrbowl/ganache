@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, shell } from 'react'
 
 import connect from '../Helpers/connect'
 
@@ -13,6 +13,8 @@ import * as AutoUpdate from '../../Actions/AutoUpdate'
 import UpdateIcon from '../../Elements/icons/modal-update.svg'
 
 import renderHtml from 'react-render-html'
+
+import * as os from 'os'
 
 import * as filesize from 'filesize'
 
@@ -112,13 +114,25 @@ class UpdateModal extends Component {
       </button>
       )
     } else if (!this.props.autoUpdate.downloadComplete && !this.props.autoUpdate.downloadInProgress) {
-      return (
-        <button className="ctaButton" onClick={() => {
-          this.props.dispatch(AutoUpdate.beginDownloading())
-        }} >
-        Download & Install
-      </button>
-      )
+      if (os.platform() === 'win32') {
+        return (
+          <button className="ctaButton" onClick={() => {
+            shell.openExternal(`https://github.com/trufflesuite/ganache/releases/v${this.props.autoUpdate.versionInfo.newVersion}`)
+            // close the modal so they can go about their business
+            this.props.dispatch(AutoUpdate.cancelUpdate())
+          }} >
+          Download Update
+        </button>
+        )
+      } else {
+        return (
+          <button className="ctaButton" onClick={() => {
+            this.props.dispatch(AutoUpdate.beginDownloading())
+          }} >
+          Download & Install
+        </button>
+        )
+      }
     }
   }
 
