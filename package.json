@@ -32,9 +32,8 @@
       "output": "dist"
     },
     "win": {
-      "icon": "resources/icons/icon.ico",
+      "icon": "resources/icons/win/icon.ico",
       "certificateFile": "./certs/cert.pfx",
-      "publisherName": "CN=Consensys Inc, O=Consensys Inc, L=New York, S=New York, C=US",
       "target": [
         {
           "target": "nsis",
@@ -61,7 +60,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": "true",
-      "deleteAppDataOnUninstall": "true"
+      "deleteAppDataOnUninstall": "true",
+      "artifactName": "ganache-setup-${version}.${ext}"
     },
     "mac": {
       "icon": "resources/icons/icon.icns",
