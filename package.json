@@ -11,7 +11,7 @@
     "make": "electron-builder build",
     "publish": "electron-builder publish",
     "lint": "echo \"No linting configured\"",
-    "sign-mac": "codesign --deep --force --verbose --sign 'Developer ID Application: Timothy Coulter (58RKXWC272)' ./out/make/*.dmg",
+    "sign-mac": "codesign --deep --force --verbose --sign 'Developer ID Application: Timothy Coulter (58RKXWC272)' ./dist/*.dmg",
     "makeappxassets": "svg2uwptiles -i ./Logo.svg -c ./blank.svg -o ./resources/appx/",
     "build-linux": "cd ./node_modules/rabin-bindings && node-gyp rebuild && cd ../../ && npm run make",
     "build-mac": "npm run make",
@@ -108,6 +108,22 @@
         "repo": "ganache"
       }
     ]
+  },
+  "config": {
+    "forge": {
+      "electronPackagerConfig": {
+        "icon": "resources/icons/win/icon.ico",
+        "prune": true,
+        "ignore": [
+          ".*node_modules/fsevents/build.*",
+          "forge_hooks",
+          ".vscode"
+        ],
+        "afterPrune": [
+          "./forge_hooks/afterPrune.js"
+        ]
+      }
+    }
   },
   "repository": {
     "type": "git",
